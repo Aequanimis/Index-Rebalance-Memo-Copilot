@@ -87,8 +87,20 @@ def main() -> None:
             ["Auto", "Gemini", "OpenAI"],
             disabled=not use_llm,
         )
-        st.caption("API keys are read from environment variables and are never shown.")
+        api_key = st.text_input(
+            "API key",
+            type="password",
+            disabled=not use_llm,
+            help="Optional. You can paste a key for this session, or set it as an environment variable before launching the app.",
+        )
+        st.caption("API keys are masked, used only for this session, and never written to project files.")
         generate_button = st.button("Generate Rebalance Memo", type="primary")
+
+        if use_llm and api_key:
+            if provider_choice == "OpenAI":
+                os.environ["OPENAI_API_KEY"] = api_key
+            else:
+                os.environ["GEMINI_API_KEY"] = api_key
 
     try:
         constituents, factor_scores, backtest_metrics = _load_inputs(
