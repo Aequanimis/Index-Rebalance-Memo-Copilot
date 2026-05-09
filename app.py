@@ -1,4 +1,6 @@
 import os
+from io import StringIO
+import csv
 
 import streamlit as st
 
@@ -51,6 +53,21 @@ def _apply_page_styles() -> None:
             font-size: 1.02rem;
             max-width: 900px;
         }
+        .workflow-stepper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 1rem;
+            color: rgba(235, 240, 248, 0.84);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .step-pill {
+            border: 1px solid rgba(102, 152, 210, 0.30);
+            border-radius: 999px;
+            padding: 0.34rem 0.62rem;
+            background: rgba(35, 78, 122, 0.20);
+        }
         .section-kicker {
             color: rgba(230, 235, 245, 0.62);
             text-transform: uppercase;
@@ -88,6 +105,44 @@ def _apply_page_styles() -> None:
         }
         .risk-low {
             border-left: 4px solid #6fbf73;
+        }
+        .metric-card {
+            border: 1px solid rgba(120, 130, 150, 0.20);
+            border-radius: 8px;
+            padding: 0.85rem 0.95rem;
+            min-height: 112px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .metric-label {
+            color: rgba(230, 235, 245, 0.66);
+            font-size: 0.78rem;
+            margin-bottom: 0.25rem;
+        }
+        .metric-value {
+            font-size: 1.42rem;
+            font-weight: 760;
+            margin-bottom: 0.25rem;
+        }
+        .metric-caption {
+            color: rgba(230, 235, 245, 0.62);
+            font-size: 0.78rem;
+            line-height: 1.25;
+        }
+        .memo-preview {
+            border: 1px solid rgba(120, 130, 150, 0.20);
+            border-radius: 8px;
+            padding: 1.1rem 1.2rem;
+            background: rgba(255, 255, 255, 0.035);
+        }
+        div.stButton > button[kind="primary"] {
+            background: #1f5f9f;
+            border-color: #1f5f9f;
+            color: #ffffff;
+        }
+        div.stButton > button[kind="primary"]:hover {
+            background: #194f85;
+            border-color: #194f85;
+            color: #ffffff;
         }
         </style>
         """,
@@ -128,6 +183,20 @@ def _select_llm_provider(provider_choice: str) -> tuple[str, str]:
     return "openai", "gpt-4o-mini"
 
 
+def _metric_card(label: str, value: str, caption: str) -> None:
+    """Render one consistent dashboard metric card."""
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-label">{label}</div>
+            <div class="metric-value">{value}</div>
+            <div class="metric-caption">{caption}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def _severity_counts(flags: list[dict]) -> dict[str, int]:
     """Count risk flags by severity."""
     counts = {"high": 0, "medium": 0, "low": 0}
@@ -163,6 +232,33 @@ def _render_flag(flag: dict) -> None:
         st.info(label)
 
 
+def _risk_flags_csv(flags: list[dict]) -> str:
+    """Convert risk flags to CSV text for download."""
+    output = StringIO()
+    fieldnames = ["severity", "category", "message", "human_review_required"]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    for flag in flags:
+        writer.writerow({field: flag.get(field, "") for field in fieldnames})
+    return output.getvalue()
+
+
+def _control_checklist(dynamic_checklist: list[str]) -> list[str]:
+    """Create the formal human control checklist shown in the app."""
+    required_items = [
+        "Confirm proposed weights match approved rebalance model output.",
+        "Validate index methodology constraints and eligibility screens.",
+        "Review corporate actions, data quality exceptions, and stale pricing.",
+        "Review tracking error drivers and active risk budget usage.",
+        "Confirm trading feasibility for suspended, limit-up, and limit-down names.",
+        "Approve or revise the final recommendation.",
+    ]
+    for item in dynamic_checklist:
+        if item not in required_items:
+            required_items.append(item)
+    return required_items
+
+
 def main() -> None:
     _apply_page_styles()
 
@@ -176,17 +272,24 @@ def main() -> None:
                 into a structured review memo with quantitative metrics, risk flags, and
                 a human review checklist.
             </div>
+            <div class="workflow-stepper">
+                <span class="step-pill">1 Load Data</span>
+                <span class="step-pill">2 Run Checks</span>
+                <span class="step-pill">3 Review Risks</span>
+                <span class="step-pill">4 Generate Memo</span>
+                <span class="step-pill">5 Human Approval</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     with st.sidebar:
-        st.subheader("Workflow")
+        st.header("Workflow Summary")
         st.caption("Load data, review deterministic checks, then generate the memo.")
         st.divider()
 
-        st.header("Inputs")
+        st.header("Data Source")
         use_demo_data = st.checkbox("Use demo data", value=True)
         constituents_file = st.file_uploader("Constituents CSV", type="csv")
         factor_scores_file = st.file_uploader("Factor scores CSV", type="csv")
@@ -197,20 +300,25 @@ def main() -> None:
             st.caption("Upload any subset of files. Missing files fall back to the demo data.")
 
         st.divider()
-        st.header("Generation")
-        use_llm = st.toggle("Use LLM generation if API key is available", value=False)
+        st.header("Memo Generation")
+        use_llm = st.toggle("Generate with LLM", value=False)
         provider_choice = st.selectbox(
             "LLM provider",
             ["Auto", "Gemini", "OpenAI"],
             disabled=not use_llm,
         )
+        default_provider, default_model = _select_llm_provider(provider_choice)
+        model = st.text_input("Model", value=default_model, disabled=not use_llm)
         api_key = st.text_input(
             "API key",
             type="password",
             disabled=not use_llm,
             help="Optional. You can paste a key for this session, or set it as an environment variable before launching the app.",
         )
-        st.caption("API keys are masked, used only for this session, and never written to project files.")
+        st.caption("API keys are used only for this session and never written to project files.")
+
+        st.divider()
+        st.header("Actions")
         generate_button = st.button("Generate Rebalance Memo", type="primary")
 
         if use_llm and api_key:
@@ -241,6 +349,7 @@ def main() -> None:
     severity_counts = _severity_counts(flags)
     active_mode = "LLM requested" if use_llm else "Mock memo"
     input_mode = "Demo data" if use_demo_data else "Uploaded files with demo fallback"
+    control_checklist = _control_checklist(checklist)
 
     status_cols = st.columns(4)
     with status_cols[0]:
@@ -252,28 +361,31 @@ def main() -> None:
         risk_class = "risk-high" if severity_counts["high"] else "risk-medium" if flags else "risk-low"
         _status_card("Risk profile", f"{len(flags)} flags", risk_note, risk_class)
     with status_cols[3]:
-        provider, model = _select_llm_provider(provider_choice)
-        _status_card("Memo mode", active_mode, f"Provider: {provider}, model: {model}")
+        provider, selected_default_model = _select_llm_provider(provider_choice)
+        selected_model = model or selected_default_model
+        _status_card("Memo mode", active_mode, f"Provider: {provider}, model: {selected_model}")
 
     st.divider()
 
     st.markdown("## Quantitative Dashboard")
-    metric_cols = st.columns(5)
-    metric_cols[0].metric("Names", f"{summary['number_of_names']}")
-    metric_cols[1].metric("Excess Return", f"{backtest['annualized_excess_return'] * 10000:.0f} bps")
-    metric_cols[2].metric("Tracking Error", f"{backtest['tracking_error']:.1%}")
-    metric_cols[3].metric("Turnover", f"{backtest['turnover']:.1%}")
-    metric_cols[4].metric("One-way Cost", f"{backtest['one_way_cost']:.2%}")
+    metric_cols = st.columns(4)
+    with metric_cols[0]:
+        _metric_card("Names", f"{summary['number_of_names']}", "Constituents in the review universe")
+    with metric_cols[1]:
+        _metric_card("Excess Return", f"{backtest['annualized_excess_return'] * 10000:.0f} bps", "Annualized active return target")
+    with metric_cols[2]:
+        _metric_card("Tracking Error", f"{backtest['tracking_error']:.1%}", "Active risk versus benchmark")
+    with metric_cols[3]:
+        _metric_card("Turnover", f"{backtest['turnover']:.1%}", "Estimated trading intensity")
 
-    summary_cols = st.columns(4)
-    summary_cols[0].metric("Overweights", f"{summary['number_of_overweights']}")
-    summary_cols[1].metric("Underweights", f"{summary['number_of_underweights']}")
-    summary_cols[2].metric("Missing Factors", f"{summary['missing_factor_count']}")
-    summary_cols[3].metric(
-        "Trading Constraints",
-        f"{summary['suspended_count'] + summary['limit_up_count'] + summary['limit_down_count']}",
-        help="Suspended plus limit-up and limit-down names",
-    )
+    metric_cols_2 = st.columns(3)
+    with metric_cols_2[0]:
+        _metric_card("One-way Cost", f"{backtest['one_way_cost']:.2%}", "Transaction cost assumption")
+    with metric_cols_2[1]:
+        _metric_card("Missing Factors", f"{summary['missing_factor_count']}", "Data quality gaps in factor inputs")
+    with metric_cols_2[2]:
+        trading_constraints = summary["suspended_count"] + summary["limit_up_count"] + summary["limit_down_count"]
+        _metric_card("Trading Constraints", f"{trading_constraints}", "Suspended plus price-limited names")
 
     diagnostics = {
         "current_weight_sum": summary["current_weight_sum"],
@@ -296,36 +408,47 @@ def main() -> None:
         if flags:
             for flag in flags:
                 _render_flag(flag)
+            risk_table = [
+                {
+                    "Severity": flag.get("severity", "").title(),
+                    "Category": flag.get("category", ""),
+                    "Message": flag.get("message", ""),
+                    "Human Review Required": "Yes" if flag.get("human_review_required") else "No",
+                }
+                for flag in flags
+            ]
+            st.dataframe(risk_table, width="stretch", hide_index=True)
         else:
             st.success("No rule-based risk flags were triggered.")
     with risk_right:
         st.markdown("#### Severity Summary")
         st.metric("High severity", severity_counts["high"])
         st.metric("Medium severity", severity_counts["medium"])
-        st.metric("Human review items", len(checklist))
+        st.metric("Human review items", len(control_checklist))
 
     st.info(f"Recommendation: {recommendation}")
 
-    st.markdown("## Input Data Preview")
-    data_tabs = st.tabs(["Constituents", "Factor Scores", "Backtest Metrics", "Top Active Names"])
-    with data_tabs[0]:
-        st.dataframe(constituents, width="stretch", height=360)
-    with data_tabs[1]:
-        st.dataframe(factor_scores, width="stretch", height=360)
-    with data_tabs[2]:
-        st.dataframe(backtest_metrics, width="stretch")
-    with data_tabs[3]:
-        active_cols = st.columns(2)
-        with active_cols[0]:
-            st.markdown("#### Top Overweights")
-            st.dataframe(summary["top_overweight_names"], width="stretch", hide_index=True)
-        with active_cols[1]:
-            st.markdown("#### Top Underweights")
-            st.dataframe(summary["top_underweight_names"], width="stretch", hide_index=True)
+    with st.expander("View input data tables", expanded=False):
+        data_tabs = st.tabs(["Constituents", "Factor Scores", "Backtest Metrics", "Top Active Names"])
+        with data_tabs[0]:
+            st.dataframe(constituents, width="stretch", height=360)
+        with data_tabs[1]:
+            st.dataframe(factor_scores, width="stretch", height=360)
+        with data_tabs[2]:
+            st.dataframe(backtest_metrics, width="stretch")
+        with data_tabs[3]:
+            active_cols = st.columns(2)
+            with active_cols[0]:
+                st.markdown("#### Top Overweights")
+                st.dataframe(summary["top_overweight_names"], width="stretch", hide_index=True)
+            with active_cols[1]:
+                st.markdown("#### Top Underweights")
+                st.dataframe(summary["top_underweight_names"], width="stretch", hide_index=True)
 
     st.markdown("## Generated Memo")
     if generate_button:
-        provider, model = _select_llm_provider(provider_choice)
+        provider, selected_default_model = _select_llm_provider(provider_choice)
+        selected_model = model or selected_default_model
         try:
             memo = generate_memo(
                 summary,
@@ -333,7 +456,7 @@ def main() -> None:
                 recommendation,
                 use_llm=use_llm,
                 provider=provider,
-                model=model,
+                model=selected_model,
             )
             st.session_state["generated_memo"] = memo
         except Exception as exc:
@@ -343,7 +466,10 @@ def main() -> None:
     if memo:
         memo_col, action_col = st.columns([3, 1])
         with memo_col:
-            st.text_area("Memo draft", memo, height=520)
+            with st.container(border=True):
+                st.markdown(memo)
+            with st.expander("View raw memo text for copying", expanded=False):
+                st.text_area("Raw memo text", memo, height=360)
         with action_col:
             st.markdown("#### Memo Actions")
             st.download_button(
@@ -353,6 +479,14 @@ def main() -> None:
                 mime="text/plain",
                 width="stretch",
             )
+            if flags:
+                st.download_button(
+                    "Download risk flags as .csv",
+                    data=_risk_flags_csv(flags),
+                    file_name="risk_flags.csv",
+                    mime="text/csv",
+                    width="stretch",
+                )
             st.caption("The memo is a draft. Final approval remains with the analyst.")
     else:
         st.info("Click Generate Rebalance Memo in the sidebar to create the memo draft.")
@@ -364,9 +498,21 @@ def main() -> None:
         "final recommendation before any index action is approved."
     )
     review_cols = st.columns(2)
-    for index, item in enumerate(checklist):
+    for index, item in enumerate(control_checklist):
         with review_cols[index % 2]:
             st.checkbox(item, value=False)
+
+    st.markdown("## Methodology Note")
+    method_cols = st.columns(4)
+    methodology = [
+        ("Python calculates", "Metrics are computed before memo generation."),
+        ("Rules detect risks", "Transparent thresholds create risk flags."),
+        ("GenAI drafts", "The model converts structured inputs into prose."),
+        ("Human decides", "Analysts approve, revise, or reject the output."),
+    ]
+    for index, (label, note) in enumerate(methodology):
+        with method_cols[index]:
+            _status_card(f"Step {index + 1}", label, note)
 
 
 if __name__ == "__main__":
