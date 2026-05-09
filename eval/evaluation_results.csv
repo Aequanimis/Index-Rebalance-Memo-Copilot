@@ -1,2 +1,12 @@
-run_id,expected_flags,generated_flags,missing_flags,unexpected_flags,passed
-starter_demo,HIGH_TURNOVER|LIMIT_DOWN_REDUCTION|LIMIT_UP_INCREASE|LOW_LIQUIDITY|MAX_ACTIVE_WEIGHT|MISSING_FACTOR_DATA|SUSPENDED_SECURITY|TOP10_ACTIVE_SHARE,HIGH_TURNOVER|LIMIT_DOWN_REDUCTION|LIMIT_UP_INCREASE|LOW_LIQUIDITY|MAX_ACTIVE_WEIGHT|MISSING_FACTOR_DATA|SUSPENDED_SECURITY|TOP10_ACTIVE_SHARE,,,true
+row_type,case_id,case_name,method,expected_categories,detected_categories,missing_categories,unexpected_categories,number_of_expected_flags,number_of_detected_flags,precision,recall,f1_score,metric_accuracy,risk_flag_coverage,business_usefulness,hallucination_control,human_review_clarity,average_score,recommendation
+case_result,normal_rebalance,Normal rebalance with stable metrics,Index Rebalance Memo Copilot,,,,,0,0,1.0,1.0,1.0,,,,,,,Approve with monitoring
+case_result,high_tracking_error,High tracking error,Index Rebalance Memo Copilot,Tracking error risk,Tracking error risk,,,1,1,1.0,1.0,1.0,,,,,,,Reject or rerun model
+case_result,high_turnover,High turnover,Index Rebalance Memo Copilot,Turnover and cost risk,Turnover and cost risk,,,1,1,1.0,1.0,1.0,,,,,,,Reject or rerun model
+case_result,suspended_stock_risk,Suspended stock risk,Index Rebalance Memo Copilot,Trading feasibility risk,Trading feasibility risk,,,1,1,1.0,1.0,1.0,,,,,,,Revise before approval
+case_result,missing_factor_data,Missing factor data,Index Rebalance Memo Copilot,Data quality risk,Data quality risk,,,1,1,1.0,1.0,1.0,,,,,,,Approve with monitoring
+case_result,concentration_risk,Concentration risk,Index Rebalance Memo Copilot,Concentration risk,Concentration risk,,,1,1,1.0,1.0,1.0,,,,,,,Approve with monitoring
+case_result,cost_sensitivity_risk,Cost sensitivity risk,Index Rebalance Memo Copilot,Turnover and cost risk,Turnover and cost risk,,,1,1,1.0,1.0,1.0,,,,,,,Approve with monitoring
+case_result,poor_performance_low_risk,Poor performance but low risk,Index Rebalance Memo Copilot,,,,,0,0,1.0,1.0,1.0,,,,,,,Approve with monitoring
+method_score,,,Manual template baseline,,,,,,,,,,2,0,1,2,1,1.2,
+method_score,,,Prompt-only baseline,,,,,,,,,,0,1,1,0,1,0.6,
+method_score,,,Index Rebalance Memo Copilot,,,,,,,,,,2,2,2,2,2,2.0,

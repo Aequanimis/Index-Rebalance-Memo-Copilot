@@ -1,10 +1,10 @@
-[
-  "HIGH_TURNOVER",
-  "LIMIT_DOWN_REDUCTION",
-  "LIMIT_UP_INCREASE",
-  "LOW_LIQUIDITY",
-  "MAX_ACTIVE_WEIGHT",
-  "MISSING_FACTOR_DATA",
-  "SUSPENDED_SECURITY",
-  "TOP10_ACTIVE_SHARE"
-]
+{
+  "normal_rebalance": [],
+  "high_tracking_error": ["Tracking error risk"],
+  "high_turnover": ["Turnover and cost risk"],
+  "suspended_stock_risk": ["Trading feasibility risk"],
+  "missing_factor_data": ["Data quality risk"],
+  "concentration_risk": ["Concentration risk"],
+  "cost_sensitivity_risk": ["Turnover and cost risk"],
+  "poor_performance_low_risk": []
+}
