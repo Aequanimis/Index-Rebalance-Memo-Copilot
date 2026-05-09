@@ -30,9 +30,9 @@ def main() -> None:
         backtest_metrics_file = st.file_uploader("Backtest metrics CSV", type="csv")
 
         st.header("Review Settings")
-        turnover_threshold = st.slider("High turnover threshold", 0.05, 0.50, 0.20, 0.01)
+        turnover_threshold = st.slider("High turnover threshold", 0.05, 0.60, 0.30, 0.01)
         concentration_threshold = st.slider("Top 5 weight threshold", 0.20, 0.70, 0.45, 0.01)
-        liquidity_threshold = st.number_input("Minimum median ADV ($mm)", 1.0, 100.0, 25.0, 1.0)
+        liquidity_threshold = st.number_input("Minimum ADV (CNY millions)", 1.0, 500.0, 100.0, 5.0)
 
     demo_data = load_demo_data(DATA_DIR)
     constituents = load_uploaded_or_demo(constituents_file, demo_data.constituents)
@@ -42,7 +42,7 @@ def main() -> None:
     thresholds = {
         "turnover": turnover_threshold,
         "top5_weight": concentration_threshold,
-        "median_adv_usd_mm": liquidity_threshold,
+        "avg_daily_value": liquidity_threshold * 1_000_000,
     }
 
     summary_metrics = calculate_summary_metrics(
@@ -61,7 +61,7 @@ def main() -> None:
 
     metric_cols = st.columns(4)
     metric_cols[0].metric("Names", f"{summary_metrics['constituent_count']:.0f}")
-    metric_cols[1].metric("One-way Turnover", f"{summary_metrics['one_way_turnover']:.1%}")
+    metric_cols[1].metric("Backtest Turnover", f"{summary_metrics['backtest_turnover']:.1%}")
     metric_cols[2].metric("Top 5 Weight", f"{summary_metrics['top5_weight']:.1%}")
     metric_cols[3].metric("Backtest Excess Return", f"{summary_metrics['excess_return_bps']:.0f} bps")
 

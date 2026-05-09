@@ -1,10 +1,2 @@
-metric,value
-annualized_return,0.118
-benchmark_annualized_return,0.104
-annualized_volatility,0.172
-benchmark_annualized_volatility,0.158
-tracking_error,0.041
-information_ratio,0.34
-max_drawdown,-0.236
-benchmark_max_drawdown,-0.198
-hit_rate,0.54
+annualized_excess_return,information_ratio,tracking_error,turnover,one_way_cost,max_active_weight,top10_active_share
+0.052,0.87,0.061,0.35,0.0022,0.045,0.31

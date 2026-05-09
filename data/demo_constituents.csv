@@ -1,11 +1,21 @@
-ticker,company,sector,current_weight,proposed_weight,median_adv_usd_mm,action
-AAPL,Apple Inc.,Information Technology,0.082,0.075,8200,Reduce
-MSFT,Microsoft Corp.,Information Technology,0.076,0.081,7600,Increase
-NVDA,NVIDIA Corp.,Information Technology,0.041,0.063,9100,Increase
-AMZN,Amazon.com Inc.,Consumer Discretionary,0.044,0.039,5200,Reduce
-META,Meta Platforms Inc.,Communication Services,0.031,0.035,4100,Increase
-XOM,Exxon Mobil Corp.,Energy,0.025,0.018,2200,Reduce
-LLY,Eli Lilly and Co.,Health Care,0.020,0.026,1800,Increase
-JPM,JPMorgan Chase & Co.,Financials,0.019,0.018,2600,Hold
-NEWC,NewCo Mobility,Industrials,0.000,0.012,18,Add
-SMID,SmallCap Data Systems,Information Technology,0.000,0.009,12,Add
+ticker,company_name,sector,current_weight,target_weight,benchmark_weight,avg_daily_value,is_suspended,is_limit_up,is_limit_down
+CNAV01,Huaxia Aero Engine Systems Co Ltd,Aviation,0.075,0.088,0.080,1450000000,false,false,false
+CNSK02,Shenzhou Skyframe Technology Co Ltd,Aviation,0.065,0.070,0.066,980000000,false,false,false
+CNJT03,Yunhai Jet Components Co Ltd,Aviation,0.052,0.058,0.055,520000000,false,false,false
+CNAV04,Eastwind Avionics Holdings Co Ltd,Aviation,0.045,0.018,0.040,0,true,false,false
+CNMC05,Zhongyuan Precision Machinery Co Ltd,Manufacturing,0.070,0.078,0.072,1180000000,false,false,false
+CNRT06,Kunlun Robotics Equipment Co Ltd,Manufacturing,0.060,0.054,0.058,760000000,false,false,false
+CNCN07,Hengda CNC Automation Co Ltd,Manufacturing,0.055,0.044,0.052,410000000,false,false,false
+CNBT08,Longsheng Battery Materials Co Ltd,Electronics,0.050,0.056,0.051,690000000,false,false,false
+CNSM09,Qianhai Semiconductor Devices Co Ltd,Electronics,0.070,0.083,0.076,1320000000,false,true,false
+CNOP10,Suzhou Optoelectronic Display Co Ltd,Electronics,0.055,0.068,0.060,840000000,false,false,false
+CNSW11,Tianhe Industrial Software Co Ltd,Software,0.045,0.054,0.047,360000000,false,false,false
+CNCL12,Beidou Cloud Systems Co Ltd,Software,0.040,0.048,0.042,295000000,false,false,false
+CNCY13,Lingyun Cybersecurity Co Ltd,Software,0.035,0.024,0.033,185000000,false,false,false
+CNDF14,Haifeng Defense Electronics Co Ltd,Defense,0.055,0.063,0.056,910000000,false,false,false
+CNRD15,Great Wall Radar Systems Co Ltd,Defense,0.045,0.053,0.046,640000000,false,false,false
+CNNV16,Northstar Navigation Equipment Co Ltd,Defense,0.035,0.039,0.036,225000000,false,false,false
+CNLG17,Jinhai Smart Logistics Co Ltd,Logistics,0.045,0.034,0.043,155000000,false,false,true
+CNPT18,Bohai Port Automation Co Ltd,Logistics,0.035,0.024,0.034,74000000,false,false,false
+CNCR19,Silk Road Air Cargo Co Ltd,Logistics,0.030,0.020,0.029,68000000,false,false,false
+CNDR20,Westlake Drone Delivery Co Ltd,Logistics,0.038,0.024,0.024,28000000,false,false,false

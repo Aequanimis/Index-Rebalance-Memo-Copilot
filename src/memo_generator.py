@@ -29,15 +29,17 @@ def generate_memo(
     return f"""# Rebalance Review Memo Draft
 
 ## Executive Summary
-The proposed rebalance covers {metrics['constituent_count']:.0f} constituents, including {metrics['adds']:.0f} additions and {metrics['deletes']:.0f} deletions. One-way turnover is {metrics['one_way_turnover']:.1%}, and the top five proposed holdings represent {metrics['top5_weight']:.1%} of the index.
+The proposed rebalance covers {metrics['constituent_count']:.0f} constituents. Backtest turnover is {metrics['backtest_turnover']:.1%}, estimated one-way cost is {metrics['one_way_cost']:.2%}, and the top five target holdings represent {metrics['top5_weight']:.1%} of the index.
 
 ## Quantitative Review
-- Weighted composite factor score: {metrics['weighted_composite_score']:.1f}
-- Median ADV: ${metrics['median_adv_usd_mm']:.1f} million
+- Weighted final factor score: {metrics['weighted_composite_score']:.2f}
+- Median ADV: CNY {metrics['median_adv_value'] / 1_000_000:.1f} million
 - Tracking error: {metrics['tracking_error']:.1%}
 - Information ratio: {metrics['information_ratio']:.2f}
 - Excess annualized return versus benchmark: {metrics['excess_return_bps']:.0f} bps
-- Max drawdown: {metrics['max_drawdown']:.1%}
+- Max active weight: {metrics['max_active_weight']:.1%}
+- Top 10 active share: {metrics['top10_active_share']:.1%}
+- Missing factor values: {metrics['missing_factor_values']:.0f}
 
 ## Risk Flags
 {flag_text}
