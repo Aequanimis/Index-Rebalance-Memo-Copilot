@@ -1,11 +1,16 @@
-from pathlib import Path
+import os
 
 import streamlit as st
 
-from src.data_loader import load_demo_data, load_uploaded_or_demo
+from src.data_loader import (
+    load_backtest_metrics,
+    load_constituents,
+    load_demo_data,
+    load_factor_scores,
+)
 from src.memo_generator import generate_memo
-from src.metrics import calculate_summary_metrics
-from src.risk_flags import build_review_checklist, detect_risk_flags
+from src.metrics import calculate_rebalance_summary
+from src.risk_flags import build_review_checklist, detect_risk_flags, generate_recommendation
 
 
 st.set_page_config(
@@ -13,9 +18,6 @@ st.set_page_config(
     page_icon="IR",
     layout="wide",
 )
-
-
-DATA_DIR = Path(__file__).parent / "data"
 
 
 def main() -> None:
@@ -29,41 +31,56 @@ def main() -> None:
         factor_scores_file = st.file_uploader("Factor scores CSV", type="csv")
         backtest_metrics_file = st.file_uploader("Backtest metrics CSV", type="csv")
 
-        st.header("Review Settings")
-        turnover_threshold = st.slider("High turnover threshold", 0.05, 0.60, 0.30, 0.01)
-        concentration_threshold = st.slider("Top 5 weight threshold", 0.20, 0.70, 0.45, 0.01)
-        liquidity_threshold = st.number_input("Minimum ADV (CNY millions)", 1.0, 500.0, 100.0, 5.0)
+        st.header("Memo Generation")
+        use_llm = st.toggle("Use LLM for memo", value=False)
+        provider_label = st.selectbox("LLM provider", ["Gemini", "OpenAI"], disabled=not use_llm)
+        default_model = "gemini-2.5-flash" if provider_label == "Gemini" else "gpt-4o-mini"
+        model = st.text_input("Model", value=default_model, disabled=not use_llm)
+        api_key = st.text_input("API key", type="password", disabled=not use_llm)
+        st.caption("API keys are used only for this session and are not written to project files.")
+        generate_llm_now = st.button("Generate LLM memo", disabled=not use_llm)
+        if use_llm and api_key:
+            if provider_label == "Gemini":
+                os.environ["GEMINI_API_KEY"] = api_key
+            else:
+                os.environ["OPENAI_API_KEY"] = api_key
 
-    demo_data = load_demo_data(DATA_DIR)
-    constituents = load_uploaded_or_demo(constituents_file, demo_data.constituents)
-    factor_scores = load_uploaded_or_demo(factor_scores_file, demo_data.factor_scores)
-    backtest_metrics = load_uploaded_or_demo(backtest_metrics_file, demo_data.backtest_metrics)
-
-    thresholds = {
-        "turnover": turnover_threshold,
-        "top5_weight": concentration_threshold,
-        "avg_daily_value": liquidity_threshold * 1_000_000,
-    }
-
-    summary_metrics = calculate_summary_metrics(
-        constituents=constituents,
-        factor_scores=factor_scores,
-        backtest_metrics=backtest_metrics,
+    demo_data = load_demo_data()
+    constituents = (
+        load_constituents(constituents_file)
+        if constituents_file is not None
+        else demo_data.constituents
     )
-    risk_flags = detect_risk_flags(
-        constituents=constituents,
-        factor_scores=factor_scores,
-        backtest_metrics=backtest_metrics,
-        thresholds=thresholds,
+    factor_scores = (
+        load_factor_scores(factor_scores_file)
+        if factor_scores_file is not None
+        else demo_data.factor_scores
     )
+    backtest_metrics = (
+        load_backtest_metrics(backtest_metrics_file)
+        if backtest_metrics_file is not None
+        else demo_data.backtest_metrics
+    )
+
+    summary = calculate_rebalance_summary(constituents, factor_scores, backtest_metrics)
+    risk_flags = detect_risk_flags(summary)
+    recommendation = generate_recommendation(summary, risk_flags)
     checklist = build_review_checklist(risk_flags)
-    memo = generate_memo(summary_metrics, risk_flags, checklist)
+    memo = generate_memo(
+        summary,
+        risk_flags,
+        recommendation,
+        use_llm=use_llm and generate_llm_now,
+        provider=provider_label.lower(),
+        model=model,
+    )
 
     metric_cols = st.columns(4)
-    metric_cols[0].metric("Names", f"{summary_metrics['constituent_count']:.0f}")
-    metric_cols[1].metric("Backtest Turnover", f"{summary_metrics['backtest_turnover']:.1%}")
-    metric_cols[2].metric("Top 5 Weight", f"{summary_metrics['top5_weight']:.1%}")
-    metric_cols[3].metric("Backtest Excess Return", f"{summary_metrics['excess_return_bps']:.0f} bps")
+    backtest = summary["backtest_metrics"]
+    metric_cols[0].metric("Names", f"{summary['number_of_names']:.0f}")
+    metric_cols[1].metric("Backtest Turnover", f"{backtest['turnover']:.1%}")
+    metric_cols[2].metric("Tracking Error", f"{backtest['tracking_error']:.1%}")
+    metric_cols[3].metric("Excess Return", f"{backtest['annualized_excess_return'] * 10000:.0f} bps")
 
     tab_data, tab_flags, tab_memo = st.tabs(["Model Outputs", "Risk Flags", "Memo Draft"])
 
@@ -78,9 +95,14 @@ def main() -> None:
     with tab_flags:
         if risk_flags:
             for flag in risk_flags:
-                st.warning(f"{flag['severity']}: {flag['title']} - {flag['detail']}")
+                st.warning(
+                    f"{flag['severity'].title()}: {flag['category']} - {flag['message']}"
+                )
         else:
             st.success("No starter-rule risk flags were triggered.")
+
+        st.subheader("Recommendation")
+        st.info(recommendation)
 
         st.subheader("Human Review Checklist")
         for item in checklist:
