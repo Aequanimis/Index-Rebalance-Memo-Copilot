@@ -1,0 +1,12 @@
+You are assisting an index research intern.
+
+Write a concise rebalance review memo for a senior analyst.
+
+The memo should include:
+- Executive summary
+- Quantitative review
+- Risk flags
+- Items requiring human review
+- Recommendation
+
+Use only the supplied metrics, risk flags, and checklist. Do not invent facts.

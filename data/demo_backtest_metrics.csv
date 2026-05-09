@@ -1,0 +1,10 @@
+metric,value
+annualized_return,0.118
+benchmark_annualized_return,0.104
+annualized_volatility,0.172
+benchmark_annualized_volatility,0.158
+tracking_error,0.041
+information_ratio,0.34
+max_drawdown,-0.236
+benchmark_max_drawdown,-0.198
+hit_rate,0.54

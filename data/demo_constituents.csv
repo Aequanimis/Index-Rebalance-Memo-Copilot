@@ -1,0 +1,11 @@
+ticker,company,sector,current_weight,proposed_weight,median_adv_usd_mm,action
+AAPL,Apple Inc.,Information Technology,0.082,0.075,8200,Reduce
+MSFT,Microsoft Corp.,Information Technology,0.076,0.081,7600,Increase
+NVDA,NVIDIA Corp.,Information Technology,0.041,0.063,9100,Increase
+AMZN,Amazon.com Inc.,Consumer Discretionary,0.044,0.039,5200,Reduce
+META,Meta Platforms Inc.,Communication Services,0.031,0.035,4100,Increase
+XOM,Exxon Mobil Corp.,Energy,0.025,0.018,2200,Reduce
+LLY,Eli Lilly and Co.,Health Care,0.020,0.026,1800,Increase
+JPM,JPMorgan Chase & Co.,Financials,0.019,0.018,2600,Hold
+NEWC,NewCo Mobility,Industrials,0.000,0.012,18,Add
+SMID,SmallCap Data Systems,Information Technology,0.000,0.009,12,Add
